@@ -16,6 +16,7 @@ Vearch System Introduction
    use_op/op_db.rst
    use_op/op_space.rst
    use_op/op_doc.rst
+   use_op/search.rst
 
 .. toctree::
       :maxdepth: 1
