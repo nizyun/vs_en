@@ -18,7 +18,7 @@ Create Space
           "index_size": 70000,
           "max_size": 10000000,
           "nprobe": 10,
-          "metric_type": 0,
+          "metric_type": "InnerProduct",
           "ncentroids": 256,
           "nsubvector": 32
       },
@@ -125,17 +125,17 @@ properties config:
 
 4. Vector type fields are feature fields. Multiple feature fields are supported in a table space. The attributes supported by vector type fields are as follows:
 
-+-------------+---------------------------+-----------+--------+-----------------------------------------------+
-|field name   |field description          |field type |must    |remarks                                        | 
-+=============+===========================+===========+========+===============================================+
-|dimension    |feature dimension          |int        |true    |值上述nsubvector值的整数倍                     |
-+-------------+---------------------------+-----------+--------+-----------------------------------------------+
-|store_type   |feature storage type       |string     |false   |support Mmap and RocksDB, default Mmap         |
-+-------------+---------------------------+-----------+--------+-----------------------------------------------+
-|store_param  |storage parameter settings |json       |false   |set the memory size of data                    |
-+-------------+---------------------------+-----------+--------+-----------------------------------------------+
-|model_id     |feature plug-in model      |string     |false   |Specify when using the feature plug-in service |
-+-------------+---------------------------+-----------+--------+-----------------------------------------------+
++-------------+---------------------------+-----------+--------+------------------------------------------------------------+
+|field name   |field description          |field type |must    |remarks                                                     | 
++=============+===========================+===========+========+============================================================+
+|dimension    |feature dimension          |int        |true    |Value is an integral multiple of the above nsubvector value |
++-------------+---------------------------+-----------+--------+------------------------------------------------------------+
+|store_type   |feature storage type       |string     |false   |support Mmap and RocksDB, default Mmap                      |
++-------------+---------------------------+-----------+--------+------------------------------------------------------------+
+|store_param  |storage parameter settings |json       |false   |set the memory size of data                                 |
++-------------+---------------------------+-----------+--------+------------------------------------------------------------+
+|model_id     |feature plug-in model      |string     |false   |Specify when using the feature plug-in service              |
++-------------+---------------------------+-----------+--------+------------------------------------------------------------+
 
 5. dimension: define that type is the field of vector, and specify the dimension size of the feature.
 
@@ -154,6 +154,4 @@ Delete Space
 ::
  
   curl -XDELETE http://master_server/space/$db_name/$space_name
-
-
 
