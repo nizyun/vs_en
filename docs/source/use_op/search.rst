@@ -90,37 +90,3 @@ Use term filter
   }
   ' http://xxxxxx/$db_name/$space_name/_search?size=10
 
-Batch query
-::
-  curl -XPOST -H "content-type: application/json" -d'
-  {
-    "query":{
-      "sum" : [
-        {
-           "field": "feature1",
-           "feature": [0, 0, 0, 0, 0, 0],
-        }
-      ]
-    }
-  }
-  ' http://xxxxxx/$db_name/$space_name/_msearch?size=10
-
-Multi vector query
-::
-  curl -XPOST -H "content-type: application/json" -d'
-  {
-    "query":{
-      "sum" : [
-        {
-           "field": "feature1",
-           "feature": [0, 0, 0, 0, 0, 0],
-        },
-        {
-           "field": "feature2",
-           "feature": [0, 0, 0, 0, 0, 0]
-        }
-      ]
-    }
-  }
-  ' http://xxxxxx/$db_name/$space_name/_search?size=10
-
