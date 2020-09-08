@@ -50,9 +50,8 @@ Create Space
           "field7": {
               "type": "vector",
               "dimension": 256,
-              "store_type": "Mmap",
+              "store_type": "MemoryOnly",
               "store_param": {
-                  "cache_size": 2000
               }
           }
       }
@@ -139,7 +138,19 @@ properties config:
 
 5. dimension: define that type is the field of vector, and specify the dimension size of the feature.
 
-6. store_param: This feature field is defined to store the occupied memory size. The default size is the engine max_size parameter value multiplied by the feature dimension multiplied by the occupied space size of each feature value. If the store'type is set to rocksdb, the changed value represents the rocksdb read buffer size. This parameter does not affect each other among multiple feature fields. The total size of all feature fields is recommended not to exceed 70% of the machine memory. Example: for 128 dimensional float feature, max_size = 1000000, the default value of cache_size is 1000000 * 128 * 4B.
+6. store_type: raw vector storage type, there are the following three options
+
+"MemoryOnly": Vectors are stored in the memory, and the amount of stored vectors is limited by the memory. It is suitable for scenarios where the amount of vectors on a single machine is not large (10 millions) and high performance requirements
+
+"RocksDB": Vectors are stored in RockDB (disk), and the amount of stored vectors is limited by the size of the disk. It is suitable for scenarios where the amount of vectors on a single machine is huge (above 100 millions) and performance requirements are not high.
+
+"Mmap": Vectors are stored in the disk file, and the amount of stored vectors is limited by the size of the disk. It is suitable for scenarios where the amount of vectors on a single machine is huge (above 100 millions) and performance requirements are not high.
+
+7. store_param: storage parameters of different store_type, it contains the following two sub-parameters
+
+cache_size: interge type, the unit is M bytes, the default is 1024. When store_type="RocksDB", it indicates the read buffer size of RocksDB. The larger the value, the better the performance of reading vector. Generally set 1024, 2048, 4096 and 6144; when store_type="Mmap", it indicates the size of the write buffer , Don’t need to be too big, generally 512, 1024 or 2048 will do; store_type="MemoryOnly", it is useless.
+
+compress: bool type, default false. True means to compress the original vector, generally the original vector will be compressed to 50% of the original, which can save memory and disk; false means no compression.
 
 
 View Space
