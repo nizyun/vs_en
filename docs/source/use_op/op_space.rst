@@ -16,11 +16,12 @@ Create Space
       "engine": {
           "name": "gamma",
           "index_size": 70000,
-          "max_size": 10000000,
-          "nprobe": 10,
-          "metric_type": "InnerProduct",
-          "ncentroids": 256,
-          "nsubvector": 32
+          "id_type": "String",
+          "retrieval_type": "IVFPQ",
+          "retrieval_param": {
+              "ncentroids": 256,
+              "nsubvector": 32 
+          }
       },
       "properties": {
           "field1": {
@@ -31,17 +32,16 @@ Create Space
           },
           "field3": {
               "type": "float",
-                  "index": "true"
+              "index": true
           },
           "field4": {
               "type": "string",
               "array": true,
-              "index": "true"
+              "index": true
           },
           "field5": {
               "type": "integer",
-              "array": false,
-              "index": "true"
+              "index": true
           },
           "field6": {
               "type": "vector",
@@ -50,8 +50,11 @@ Create Space
           "field7": {
               "type": "vector",
               "dimension": 256,
-              "store_type": "MemoryOnly",
+              "format": "normalization",
+              "store_type": "RocksDB",
               "store_param": {
+                  "cache_size": 2048,
+                  "compress": false
               }
           }
       }
@@ -83,36 +86,120 @@ Parameter description:
 
 engine config:
 
-+-------------+--------------------------------------+-----------+----------+---------------------------------------+
-|field name   |field description                     |field type |must      |remarks                                | 
-+=============+======================================+===========+==========+=======================================+
-|name         |engine name                           |string     |true      |currently fixed to gamma               |
-+-------------+--------------------------------------+-----------+----------+---------------------------------------+
-|index_size   |slice index threshold                 |int        |false     |                                       |
-+-------------+--------------------------------------+-----------+----------+---------------------------------------+
-|max_size     |maximum number of records in segments |int        |false     |                                       |
-+-------------+--------------------------------------+-----------+----------+---------------------------------------+
-|nprobe       |number of cable bins                  |int        |false     |default 10                             |
-+-------------+--------------------------------------+-----------+----------+---------------------------------------+
-|metric_type  |calculation method                    |string     |false     |InnerProduct and L2,  default L2       |
-+-------------+--------------------------------------+-----------+----------+---------------------------------------+
-|ncentroids   |                                      |int        |false     |default 256                            |
-+-------------+--------------------------------------+-----------+----------+---------------------------------------+
-|nsubvector   |PQ disassembler vector size           |int        |false     |default 64, must be a multiple of 4    |
-+-------------+--------------------------------------+-----------+----------+---------------------------------------+
++----------------+----------------------------- +-----------+----------+---------------------------------------+
+|field name      |field description             |field type |must      |remarks                                | 
++================+==============================+===========+==========+=======================================+
+|name            |engine name                   |string     |true      |currently fixed to gamma               |
++----------------+------------------------------+-----------+----------+---------------------------------------+
+|index_size      |slice index threshold         |int        |false     |                                       |
++----------------+------------------------------+-----------+----------+---------------------------------------+
+|id_type         |Unique primary key type       |string     |false     |                                       |
++----------------+------------------------------+-----------+----------+---------------------------------------+
+|retrieval_type  |search model                  |string     |true      |                                       |
++----------------+------------------------------+-----------+----------+---------------------------------------+
+|retrieval_param |model config                  |json       |false     |                                       |
++----------------+------------------------------+-----------+----------+---------------------------------------+
+
+1. name: now value is gamma.
+
+2. index_size: Specify the number of records in each partition to start index creation. If not specified, no index will be created. 
+
+3. id_type Specify primary key type, can be string or long.
+
+4. retrieval_type search model, now support IVFPQ，HNSW，GPU，IVFFLAT，BINARYIVF，FLAT.
+
+IVFPQ:
+
++---------------+-------------------------------+------------+------------+----------------------------------------+
+|field name     |field description              |field type  |must        |remarks                                 |
++===============+===============================+============+============+========================================+
+|ncentroids     |number of buckets for indexing |int         |false       |default 2048                            |
++---------------+-------------------------------+------------+------------+----------------------------------------+
+|nsubvector     |PQ disassembler vector size    |int         |false       |default 64, must be a multiple of 4     |
++---------------+-------------------------------+------------+------------+----------------------------------------+
+
+::
+ 
+  "retrieval_type": "IVFPQ",
+  "retrieval_param": {
+      "ncentroids": 2048,
+      "nsubvector": 64
+  }
 
 
-1. index_size: Specify the number of records in each partition to start index creation. If not specified, no index will be created. 
+HNSW:
 
-2. max_size: Specify the maximum number of records stored in each partition to prevent excessive server memory consumption. 
++---------------+------------------------------+------------+------------+---------------+
+|field name     |field description             |field type  |must        |remarks        |
++===============+==============================+============+============+===============+
+|nlinks         |Number of node neighbors      |int         |false       |default 32     |
++---------------+------------------------------+------------+------------+---------------+
+|efConstruction |Composition traversal depth   |int         |false       |default 40     |
++---------------+------------------------------+------------+------------+---------------+
 
-3. nprobe: The number of buckets to search in the index cannot be greater than the value of ncentroids.
+::
 
-4. metric_type: Specify the calculation method, inner product or Euclidean distance. 
+  "retrieval_type": "HNSW",
+  "retrieval_param": {
+      "nlinks": 32,
+      "efConstruction": 40
+  }
 
-5. ncentroids: Specifies the number of buckets for indexing.
+  Note: 1. Vector storage only supports MemoryOnly
+        2. No training is required to create an index, and the index_size value can be greater than 0
 
-6. nsubvector: PQ disassembler vector size.
+
+GPU (Compiled version for GPU):
+
++---------------+---------------------------------+------------+------------+----------------------------------------+
+|field name     |field description                |field type  |must        |remarks                                 |
++===============+=================================+============+============+========================================+
+|ncentroids     |number of buckets for indexing   |int         |false       |default 2048                            |
++---------------+---------------------------------+------------+------------+----------------------------------------+
+|nsubvector     |PQ disassembler vector size      |int         |false       |default 64, must be a multiple of 4     | 
++---------------+---------------------------------+------------+------------+----------------------------------------+
+
+::
+ 
+  "retrieval_type": "GPU",
+  "retrieval_param": {
+      "ncentroids": 2048,
+      "nsubvector": 64
+  }
+
+IVFFLAT:
+
++---------------+-------------------------------+------------+------------+----------------------------------------+
+|field name     |field description              |field type  |must        |remarks                                 |
++===============+===============================+============+============+========================================+
+|ncentroids     |number of buckets for indexing |int         |default     |default 256                             |
++---------------+-------------------------------+------------+------------+----------------------------------------+
+
+::
+ 
+  "retrieval_type": "IVFFLAT",
+  "retrieval_param": {
+      "ncentroids": 256
+  }
+
+ Note: 1. The vector storage method only supports RocksDB  
+
+BINARYIVF:
+
++---------------+-------------------------------+------------+------------+----------------------------------------+
+|field name     |field description              |field type  |must        |remarks                                 |
++===============+===============================+============+============+========================================+
+|ncentroids     |number of buckets for indexing |int         |default     |default 256                             |
++---------------+-------------------------------+------------+------------+----------------------------------------+
+
+::
+ 
+  "retrieval_type": "BINARYIVF",
+  "retrieval_param": {
+      "ncentroids": 256
+  }
+  
+  Note: 1. The vector length is a multiple of 8
 
 properties config:
 
@@ -123,6 +210,7 @@ properties config:
 3. Integer, float type fields support the index attribute, and the fields with index set to true support the use of numeric range filtering queries.
 
 4. Vector type fields are feature fields. Multiple feature fields are supported in a table space. The attributes supported by vector type fields are as follows:
+
 
 +-------------+---------------------------+-----------+--------+------------------------------------------------------------+
 |field name   |field description          |field type |must    |remarks                                                     | 
@@ -135,6 +223,7 @@ properties config:
 +-------------+---------------------------+-----------+--------+------------------------------------------------------------+
 |model_id     |feature plug-in model      |string     |false   |Specify when using the feature plug-in service              |
 +-------------+---------------------------+-----------+--------+------------------------------------------------------------+
+
 
 5. dimension: define that type is the field of vector, and specify the dimension size of the feature.
 
