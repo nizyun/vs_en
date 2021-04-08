@@ -54,7 +54,7 @@ Create Space
               "store_type": "RocksDB",
               "store_param": {
                   "cache_size": 2048,
-                  "compress": false
+                  "compress": {"rate":16}
               }
           }
       }
@@ -233,13 +233,13 @@ properties config:
 
 "RocksDB": Vectors are stored in RockDB (disk), and the amount of stored vectors is limited by the size of the disk. It is suitable for scenarios where the amount of vectors on a single machine is huge (above 100 millions) and performance requirements are not high.
 
-"Mmap": Vectors are stored in the disk file, and the amount of stored vectors is limited by the size of the disk. It is suitable for scenarios where the amount of vectors on a single machine is huge (above 100 millions) and performance requirements are not high.
+"Mmap": The original vector is stored in a disk file. Use the cache to improve performance. The amount of storage is limited by disk size. Applicable to the single machine data volume is huge (over 100 million), the performance requirements are not high scene.
 
 7. store_param: storage parameters of different store_type, it contains the following two sub-parameters
 
-cache_size: interge type, the unit is M bytes, the default is 1024. When store_type="RocksDB", it indicates the read buffer size of RocksDB. The larger the value, the better the performance of reading vector. Generally set 1024, 2048, 4096 and 6144; when store_type="Mmap", it indicates the size of the write buffer , Don’t need to be too big, generally 512, 1024 or 2048 will do; store_type="MemoryOnly", it is useless.
+cache_size: interge type, the unit is M bytes, the default is 1024. When store_type="RocksDB", it indicates the read buffer size of RocksDB. The larger the value, the better the performance of reading vector. Generally set 1024, 2048, 4096 and 6144; when store_type ="Mmap", represents the size of read buffer, generally 512, 1024, 2048 and 4096, can be set according to the actual application scenario; store_type ="MemoryOnly", cache_size is not in effect.
 
-compress: bool type, default false. True means to compress the original vector, generally the original vector will be compressed to 50% of the original, which can save memory and disk; false means no compression.
+compress: set to {"rate":16} to compress by 50%;Default does not compress.
 
 
 View Space
@@ -255,3 +255,42 @@ Delete Space
  
   curl -XDELETE http://master_server/space/$db_name/$space_name
 
+
+Modify cache size
+------------
+::
+ 
+  curl -H "content-type: application/json" -XPOST -d'
+  {
+      "cache_models": [
+          {
+              "name": "table",
+              "cache_size": 1024,
+          },
+          {
+              "name": "string",
+              "cache_size": 1024,
+          },
+          {
+              "name": "field7",
+              "cache_size": 1024,
+          }
+      ]
+  }
+  ' http://master_server/config/$db_name/$space_name
+
+1. table cache size: Represents the cache size of all fixed-length scalar fields (integer, long, float, double). The default value is 512M.
+
+2. string cache size: Represents the cache size of all variable-length scalar fields (string). The default value is 512M.
+
+3. store_type is the vector field of Mmap that can modify the cache size.
+
+
+Get cache size
+------------
+::
+ 
+  curl -XGET http://master_server/config/$db_name/$space_name
+
+
+1. store_type is the vector field of Mmap to view the cache size. Other storage methods for vector fields do not support viewing the cache size.
