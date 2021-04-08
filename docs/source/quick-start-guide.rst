@@ -7,36 +7,39 @@ Compile
 
 Environmental dependence
 
-1. Linux system(recommend CentOS 7.2 or more), supporting cmake and make commands.
-2. Go version 1.11.2 or more
-3. Gcc version 5 or more
-4. `Faiss <https://github.com/facebookresearch/faiss>`_
+1. CentOS, Ubuntu and Mac OS are all OK (recommend CentOS >= 7.2).
+2. go >= 1.11.2 required.
+3. gcc >= 5 required.
+4. cmake >= 3.17 required.
+5. OpenBLAS.
+6. tbb，In CentOS it can be installed by yum. Such as: yum install tbb-devel.x86_64.
+7. RocksDB == 6.2.2 (optional). You don't need to install it manually, the script installs it automatically. But you need to manually install the dependencies of rocksdb. Please refer to the installation method: https://github.com/facebook/rocksdb/blob/master/INSTALL.md
+8. zfp == v0.5.5 (optional), You don't need to install it manually, the script installs it automatically.
+9. CUDA >= 9.0, if you want GPU support.
 
 Compile
 
--  download source code: git clone https://github.com/vearch/vearch.git (Follow-up use of $vearch to represent the absolute path of the vearch directory)
+-  Enter the GOPATH directory, cd $GOPATH/src mkdir -p github.com/vearch cd github.com/vearch
 
--  compile gamma
+-  Download the source code: git clone https://github.com/vearch/vearch.git ($vearch denotes the absolute path of vearch code)
 
-   1. ``cd $vearch/engine/gamma/src``
-   2. ``mkdir build && cd build``
-   3. ``export Faiss_HOME=faiss安装路径``
-   4. ``cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$vearch/ps/engine/gammacb/lib ..``
-   5. ``make && make install``
+-  Download the source code of subprojects gamma: cd vearch git submodule update --recursive
 
--  compile vearch
+-  To add GPU Index support: change BUILD_WITH_GPU from "off" to "on" in $vearch/engine/CMakeLists.txt
 
-   1. ``cd $vearch``
-   2. ``export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$vearch/ps/engine/gammacb/lib/lib``
-   3. ``export Faiss_HOME=faiss安装路径``
-   4. ``go build -a --tags=vector -o  vearch``
+-  Compile vearch and gamma
+
+   1. ``cd build``
+   2. ``sh build.sh``
    
    generate \ ``vearch``\ file compile success
 
 Deploy
 --------
 
-stand-alone mode:
+Before run vearch, you shuld set ``LD_LIBRARY_PATH``, Ensure that system can find gamma dynamic libraries. The gamma dynamic library that has been compiled is in the $vearch/build/gamma_build folder.
+
+Local Model:
 
 -  generate configuration file conf.toml
 ::
@@ -91,8 +94,85 @@ stand-alone mode:
 
 ::
 
-   ./vearch -conf conf.toml
+   ./vearch -conf conf.toml all
 
-Use Examples
---------
+
+
+Cluster Model:  
+
+- vearch has three module: ps(PartitionServer) , master, router, run ./vearch -f conf.toml ps/router/master start ps/router/master module
+
+Now we have five machine, two master, two ps and one router
+
+-  master
+
+   -  192.168.1.1
+   -  192.168.1.2
+
+-  ps
+
+   -  192.168.1.3
+   -  192.168.1.4
+
+-  router
+
+   -  192.168.1.5
+
+
+
+::
+
+    [global]
+        name = "vearch"
+        data = ["datas/"]
+        log = "logs/"
+        level = "info"
+        signkey = "vearch"
+        skip_auth = true
+
+    # if you are master, you'd better set all config for router、ps and router, ps use default config it so cool
+    [[masters]]
+        name = "m1"
+        address = "192.168.1.1"
+        api_port = 8817
+        etcd_port = 2378
+        etcd_peer_port = 2390
+        etcd_client_port = 2370
+    [[masters]]
+        name = "m2"
+        address = "192.168.1.2"
+        api_port = 8817
+        etcd_port = 2378
+        etcd_peer_port = 2390
+        etcd_client_port = 2370
+    [router]
+        port = 9001
+        skip_auth = true
+    [ps]
+        rpc_port = 8081
+        raft_heartbeat_port = 8898
+        raft_replicate_port = 8899
+        heartbeat-interval = 200 #ms
+        raft_retain_logs = 10000
+        raft_replica_concurrency = 1
+        raft_snap_concurrency = 1
+        
+
+-  on 192.168.1.1 , 192.168.1.2 run master
+
+::
+
+    ./vearch -conf config.toml master
+
+-  on 192.168.1.3 , 192.168.1.4 run ps
+
+::
+
+    ./vearch -conf config.toml ps
+
+-  on 192.168.1.5 run router
+
+::
+
+    ./vearch -conf config.toml router
 
