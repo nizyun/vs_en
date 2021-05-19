@@ -242,6 +242,9 @@ cache_size: interge type, the unit is M bytes, the default is 1024. When store_t
 compress: set to {"rate":16} to compress by 50%;Default does not compress.
 
 
+Scalar Index
+Gamma engine supports scalar index, provides the filtering function for scalar data, the opening method refers to the 2nd and 3rd in the "properties config", and the retrieval method refers to the "filter json structure elucidation" in the "Search"
+
 View Space
 ----------
 ::
