@@ -14,7 +14,6 @@ Create Space
       "partition_num": 1,
       "replica_num": 1,
       "engine": {
-          "name": "gamma",
           "index_size": 70000,
           "id_type": "String",
           "retrieval_type": "IVFPQ",
@@ -89,8 +88,6 @@ engine config:
 +----------------+------------------------------+-----------+----------+---------------------------------------+
 |field name      |field description             |field type |must      |remarks                                | 
 +================+==============================+===========+==========+=======================================+
-|name            |engine name                   |string     |true      |currently fixed to gamma               |
-+----------------+------------------------------+-----------+----------+---------------------------------------+
 |index_size      |slice index threshold         |int        |false     |                                       |
 +----------------+------------------------------+-----------+----------+---------------------------------------+
 |id_type         |Unique primary key type       |string     |false     |                                       |
@@ -100,13 +97,11 @@ engine config:
 |retrieval_param |model config                  |json       |false     |                                       |
 +----------------+------------------------------+-----------+----------+---------------------------------------+
 
-1. name: now value is gamma.
+1. index_size: Specify the number of records in each partition to start index creation. If not specified, no index will be created. 
 
-2. index_size: Specify the number of records in each partition to start index creation. If not specified, no index will be created. 
+2. id_type Specify primary key type, can be string or long.
 
-3. id_type Specify primary key type, can be string or long.
-
-4. retrieval_type search model, now support IVFPQ，HNSW，GPU，IVFFLAT，BINARYIVF，FLAT.
+3. retrieval_type search model, now support IVFPQ，HNSW，GPU，IVFFLAT，BINARYIVF，FLAT.
 
 IVFPQ:
 
